@@ -24,9 +24,12 @@ const {GIT_NOTE_REF} = require('../../lib/definitions/constants');
  * @return {String} The path of the repository
  */
 async function initGit(withRemote) {
+  console.warn(`git-utils.js: initGit\n`);
   const cwd = tempy.directory();
+  console.warn(`git-utils.js: initGit cwd: ${cwd}\n`);
 
   await execa('git', ['init', ...(withRemote ? ['--bare'] : [])], {cwd});
+  console.warn(`git-utils.js: initGit git init\n`);
   const repositoryUrl = fileUrl(cwd);
   return {cwd, repositoryUrl};
 }
@@ -42,15 +45,21 @@ async function initGit(withRemote) {
  * @return {String} The path of the clone if `withRemote` is `true`, the path of the repository otherwise.
  */
 async function gitRepo(withRemote, branch = 'master') {
+  console.warn(`git-utils.js: gitRepo (withRemote: ${withRemote}, branch: ${branch})\n`);
   let {cwd, repositoryUrl} = await initGit(withRemote);
+  console.warn(`git-utils.js: gitRepo initGit() cwd: ${cwd}, repositoryUrl: ${repositoryUrl}\n`);
   if (withRemote) {
     await initBareRepo(repositoryUrl, branch);
+    console.warn(`git-utils.js: gitRepo initBareRepo()\n`);
     cwd = await gitShallowClone(repositoryUrl, branch);
+    console.warn(`git-utils.js: gitRepo gitShallowClone(): ${cwd}\n`);
   } else {
     await gitCheckout(branch, true, {cwd});
+    console.warn(`git-utils.js: gitRepo gitCheckout()\n`);
   }
 
   await execa('git', ['config', 'commit.gpgsign', false], {cwd});
+  console.warn(`git-utils.js: gitRepo git confi\n`);
 
   return {cwd, repositoryUrl};
 }
@@ -67,11 +76,17 @@ async function gitRepo(withRemote, branch = 'master') {
  * @param {String} [branch='master'] the branch to initialize.
  */
 async function initBareRepo(repositoryUrl, branch = 'master') {
+  console.warn(`git-utils.js: initBareRepo (repositoryUrl: ${repositoryUrl}, branch: ${branch})\n`);
   const cwd = tempy.directory();
+  console.warn(`git-utils.js: initBareRepo cwd: ${cwd}\n`);
   await execa('git', ['clone', '--no-hardlinks', repositoryUrl, cwd], {cwd});
+  console.warn(`git-utils.js: initBareRepo git clone\n`);
   await gitCheckout(branch, true, {cwd});
+  console.warn(`git-utils.js: initBareRepo gitCheckout()\n`);
   await gitCommits(['Initial commit'], {cwd});
+  console.warn(`git-utils.js: initBareRepo gitCommits()\n`);
   await execa('git', ['push', repositoryUrl, branch], {cwd});
+  console.warn(`git-utils.js: initBareRepo git push\n`);
 }
 
 /**
@@ -123,7 +138,9 @@ async function gitGetCommits(from, execaOptions) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function gitCheckout(branch, create, execaOptions) {
+  console.warn(`gitbox.js: gitCheckout(branch: ${branch}, create: ${create}, execaOptions: ${execaOptions})\n`);
   await execa('git', create ? ['checkout', '-b', branch] : ['checkout', branch], execaOptions);
+  console.warn(`gitbox.js: gitCheckout git create\n`);
 }
 
 /**
@@ -133,7 +150,9 @@ async function gitCheckout(branch, create, execaOptions) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function gitFetch(repositoryUrl, execaOptions) {
+  console.warn(`gitbox.js: gitFetch(repositoryUrl: ${repositoryUrl}, execaOptions: ${execaOptions})\n`);
   await execa('git', ['fetch', repositoryUrl], execaOptions);
+  console.warn(`gitbox.js: gitFetch git fetch\n`);
 }
 
 /**
@@ -144,6 +163,7 @@ async function gitFetch(repositoryUrl, execaOptions) {
  * @return {String} The sha of the head commit in the current git repository.
  */
 async function gitHead(execaOptions) {
+  console.warn(`gitbox.js: gitHead(execaOptions: ${execaOptions})\n`);
   return (await execa('git', ['rev-parse', 'HEAD'], execaOptions)).stdout;
 }
 
@@ -155,7 +175,9 @@ async function gitHead(execaOptions) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function gitTagVersion(tagName, sha, execaOptions) {
+  console.warn(`gitbox.js: gitTagVersion(tagName: ${tagName}, sha: ${sha}, execaOptions: ${execaOptions})\n`);
   await execa('git', sha ? ['tag', '-f', tagName, sha] : ['tag', tagName], execaOptions);
+  console.warn(`gitbox.js: gitTagVersion tag ...\n`);
 }
 
 /**
@@ -168,11 +190,14 @@ async function gitTagVersion(tagName, sha, execaOptions) {
  * @return {String} The path of the cloned repository.
  */
 async function gitShallowClone(repositoryUrl, branch = 'master', depth = 1) {
+  console.warn(`gitbox.js: gitShallowClone(repositoryUrl: ${repositoryUrl}, branch: ${branch}, depth: ${depth})\n`);
   const cwd = tempy.directory();
+  console.warn(`gitbox.js: gitShallowClone cwd: ${cwd}\n`);
 
   await execa('git', ['clone', '--no-hardlinks', '--no-tags', '-b', branch, '--depth', depth, repositoryUrl, cwd], {
     cwd,
   });
+  console.warn(`gitbox.js: gitShallowClone git clone\n`);
   return cwd;
 }
 
@@ -184,23 +209,36 @@ async function gitShallowClone(repositoryUrl, branch = 'master', depth = 1) {
  * @return {String} The path of the new repository.
  */
 async function gitDetachedHead(repositoryUrl, head) {
+  console.warn(`gitbox.js: gitDetachedHead(repositoryUrl: ${repositoryUrl}, head: ${head})\n`);
   const cwd = tempy.directory();
+  console.warn(`gitbox.js: gitDetachedHead cwd: ${cwd}\n`);
 
   await execa('git', ['init'], {cwd});
+  console.warn(`gitbox.js: gitDetachedHead init\n`);
   await execa('git', ['remote', 'add', 'origin', repositoryUrl], {cwd});
+  console.warn(`gitbox.js: gitDetachedHead remote add origin\n`);
   await execa('git', ['fetch', repositoryUrl], {cwd});
+  console.warn(`gitbox.js: gitDetachedHead fetch\n`);
   await execa('git', ['checkout', head], {cwd});
+  console.warn(`gitbox.js: gitDetachedHead checkout\n`);
   return cwd;
 }
 
 async function gitDetachedHeadFromBranch(repositoryUrl, branch, head) {
+  console.warn(`gitbox.js: gitDetachedHeadFromBranch(repositoryUrl: ${repositoryUrl}, branch: ${branch}, head: ${head})\n`);
   const cwd = tempy.directory();
+  console.warn(`gitbox.js: gitDetachedHeadFromBranch cwd: ${cwd}\n`);
 
   await execa('git', ['init'], {cwd});
+  console.warn(`gitbox.js: gitDetachedHeadFromBranch init\n`);
   await execa('git', ['remote', 'add', 'origin', repositoryUrl], {cwd});
+  console.warn(`gitbox.js: gitDetachedHeadFromBranch remote add origin\n`);
   await execa('git', ['fetch', '--force', repositoryUrl, `${branch}:remotes/origin/${branch}`], {cwd});
+  console.warn(`gitbox.js: gitDetachedHeadFromBranch fetch\n`);
   await execa('git', ['reset', '--hard', head], {cwd});
+  console.warn(`gitbox.js: gitDetachedHeadFromBranch reset\n`);
   await execa('git', ['checkout', '-q', '-B', branch], {cwd});
+  console.warn(`gitbox.js: gitDetachedHeadFromBranch checkout\n`);
   return cwd;
 }
 
@@ -212,7 +250,9 @@ async function gitDetachedHeadFromBranch(repositoryUrl, branch, head) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function gitAddConfig(name, value, execaOptions) {
+  console.warn(`gitbox.js: gitAddConfig(name: ${name}, value: ${value}, execaOptions: ${execaOptions})\n`);
   await execa('git', ['config', '--add', name, value], execaOptions);
+  console.warn(`gitbox.js: gitAddConfig git config add\n`);
 }
 
 /**
@@ -224,6 +264,7 @@ async function gitAddConfig(name, value, execaOptions) {
  * @return {String} The sha of the commit associated with `tagName` on the local repository.
  */
 async function gitTagHead(tagName, execaOptions) {
+  console.warn(`gitbox.js: gitTagHead(tagName: ${tagName}, execaOptions: ${execaOptions})\n`);
   return (await execa('git', ['rev-list', '-1', tagName], execaOptions)).stdout;
 }
 
@@ -237,6 +278,7 @@ async function gitTagHead(tagName, execaOptions) {
  * @return {String} The sha of the commit associated with `tagName` on the remote repository.
  */
 async function gitRemoteTagHead(repositoryUrl, tagName, execaOptions) {
+  console.warn(`gitbox.js: gitRemoteTagHead(repositoryUrl: ${repositoryUrl}, tagName: ${tagName}, execaOptions: ${execaOptions})\n`);
   return (await execa('git', ['ls-remote', '--tags', repositoryUrl, tagName], execaOptions)).stdout
     .split('\n')
     .filter((tag) => Boolean(tag))
@@ -252,6 +294,7 @@ async function gitRemoteTagHead(repositoryUrl, tagName, execaOptions) {
  * @return {String} The tag associatedwith the sha in parameter or `null`.
  */
 async function gitCommitTag(gitHead, execaOptions) {
+  console.warn(`gitbox.js: gitCommitTag(gitHead: ${gitHead}, execaOptions: ${execaOptions})\n`);
   return (await execa('git', ['describe', '--tags', '--exact-match', gitHead], execaOptions)).stdout;
 }
 
@@ -265,7 +308,9 @@ async function gitCommitTag(gitHead, execaOptions) {
  * @throws {Error} if the push failed.
  */
 async function gitPush(repositoryUrl, branch, execaOptions) {
+  console.warn(`gitbox.js: gitPush(repositoryUrl: ${repositoryUrl}, branch: ${branch}, execaOptions: ${execaOptions})\n`);
   await execa('git', ['push', '--tags', repositoryUrl, `HEAD:${branch}`], execaOptions);
+  console.warn(`gitbox.js: gitPush git push tags\n`);
 }
 
 /**
@@ -275,7 +320,9 @@ async function gitPush(repositoryUrl, branch, execaOptions) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function merge(ref, execaOptions) {
+  console.warn(`gitbox.js: merge(ref: ${ref}, execaOptions: ${execaOptions})\n`);
   await execa('git', ['merge', '--no-ff', ref], execaOptions);
+  console.warn(`gitbox.js: merge git merge --no-ff\n`);
 }
 
 /**
@@ -285,7 +332,9 @@ async function merge(ref, execaOptions) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function mergeFf(ref, execaOptions) {
+  console.warn(`gitbox.js: mergeFf(ref: ${ref}, execaOptions: ${execaOptions})\n`);
   await execa('git', ['merge', '--ff', ref], execaOptions);
+  console.warn(`gitbox.js: mergeFf git merge --ff\n`);
 }
 
 /**
@@ -295,7 +344,9 @@ async function mergeFf(ref, execaOptions) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function rebase(ref, execaOptions) {
+  console.warn(`gitbox.js: rebase(ref: ${ref}, execaOptions: ${execaOptions})\n`);
   await execa('git', ['rebase', ref], execaOptions);
+  console.warn(`gitbox.js: rebase git rebase --ff\n`);
 }
 
 /**
@@ -306,7 +357,9 @@ async function rebase(ref, execaOptions) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function gitAddNote(note, ref, execaOptions) {
+  console.warn(`gitbox.js: gitAddNote(note: ${note}, ref: ${ref}, execaOptions: ${execaOptions})\n`);
   await execa('git', ['notes', '--ref', GIT_NOTE_REF, 'add', '-m', note, ref], execaOptions);
+  console.warn(`gitbox.js: gitAddNote notes --ref\n`);
 }
 
 /**
@@ -316,6 +369,7 @@ async function gitAddNote(note, ref, execaOptions) {
  * @param {Object} [execaOpts] Options to pass to `execa`.
  */
 async function gitGetNote(ref, execaOptions) {
+  console.warn(`gitbox.js: gitGetNote(ref: ${ref}, execaOptions: ${execaOptions})\n`);
   return (await execa('git', ['notes', '--ref', GIT_NOTE_REF, 'show', ref], execaOptions)).stdout;
 }
 

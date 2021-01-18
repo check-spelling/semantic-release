@@ -18,14 +18,18 @@ const gitCredential = `${GIT_USERNAME}:${GIT_PASSWORD}`;
  * Download the `gitbox` Docker image, create a new container and start it.
  */
 async function start() {
+  console.warn(`gitbox.js: start\n`);
   await getStream(await docker.pull(IMAGE));
 
+  console.warn(`gitbox.js: start getStream()\n`);
   container = await docker.createContainer({
     Tty: true,
     Image: IMAGE,
     PortBindings: {[`${SERVER_PORT}/tcp`]: [{HostPort: `${HOST_PORT}`}]},
   });
+  console.warn(`gitbox.js: start createContainer(): ${container}\n`);
   await container.start();
+  console.warn(`gitbox.js: start container.start()`);
 
   const exec = await container.exec({
     Cmd: ['ng-auth', '-u', GIT_USERNAME, '-p', GIT_PASSWORD],
@@ -33,6 +37,7 @@ async function start() {
     AttachStderr: true,
   });
   await exec.start();
+  console.warn(`gitbox.js: start exec()`);
 }
 
 /**
@@ -40,7 +45,9 @@ async function start() {
  */
 async function stop() {
   await container.stop();
+  console.warn(`gitbox.js: container.stop()`);
   await container.remove();
+  console.warn(`gitbox.js: container.remove()`);
 }
 
 /**
@@ -57,14 +64,18 @@ async function createRepo(name, branch = 'master', description = `Repository ${n
     AttachStdout: true,
     AttachStderr: true,
   });
+  console.warn(`gitbox.js: createRepo container.exec()`);
   await exec.start();
+  console.warn(`gitbox.js: createRepo exec.start()`);
 
   const repositoryUrl = `http://${SERVER_HOST}:${HOST_PORT}/git/${name}.git`;
   const authUrl = `http://${gitCredential}@${SERVER_HOST}:${HOST_PORT}/git/${name}.git`;
 
   // Retry as the server might take a few ms to make the repo available push
   await pRetry(() => initBareRepo(authUrl, branch), {retries: 3, minTimeout: 500, factor: 2});
+  console.warn(`gitbox.js: createRepo pRetry() initBareRepo(authUrl: ${authUrl}, branch: ${branch})\n`);
   const cwd = await gitShallowClone(authUrl);
+  console.warn(`gitbox.js: createRepo gitShallowClone: ${cwd}\n`);
 
   return {cwd, repositoryUrl, authUrl};
 }
