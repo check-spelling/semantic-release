@@ -23,6 +23,13 @@ const {npmView} = require('./helpers/npm-utils');
 const gitbox = require('./helpers/gitbox');
 const mockServer = require('./helpers/mockserver');
 const npmRegistry = require('./helpers/npm-registry');
+const envCi = require('env-ci');
+
+envCi.branch = function(options)
+{
+  console.warn(`envCi.branch => master!\n`);
+  return 'master';
+}
 
 /* eslint camelcase: ["error", {properties: "never"}] */
 
@@ -37,6 +44,9 @@ const env = {
   CI: 'true',
   TRAVIS_BRANCH: 'master',
   TRAVIS_PULL_REQUEST: 'false',
+  GITHUB_EVENT_NAME: 'push',
+  GITHUB_EVENT_PATH: null,
+  GITHUB_ACTION: null,
 };
 // Environment variables used only for the local npm command used to do verification
 const testEnv = {
