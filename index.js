@@ -20,14 +20,29 @@ const getLogger = require('./lib/get-logger');
 const {verifyAuth, isBranchUpToDate, getGitHead, tag, push, pushNotes, getTagHead, addNote} = require('./lib/git');
 const getError = require('./lib/get-error');
 const {COMMIT_NAME, COMMIT_EMAIL} = require('./lib/definitions/constants');
+const util = require('util');
 
 marked.setOptions({renderer: new TerminalRenderer()});
 
 /* eslint complexity: off */
 async function run(context, plugins) {
   const {cwd, env, options, logger} = context;
+  console.warn(`semantic-release:
+  cwd: ${cwd}
+  env: ${util.inspect(env, {showHidden: false, depth: null})}
+  options: ${util.inspect(options, {showHidden: false, depth: null})}
+  `);
   const {isCi, branch, prBranch, isPr} = context.envCi;
+  console.warn(`...
+  isCi: ${isCi}
+  branch: ${branch}
+  prBranch: ${prBranch}
+  isPr: ${isPr}
+  `);
   const ciBranch = isPr ? prBranch : branch;
+  console.warn(`...
+  ciBranch: ${ciBranch}
+  `);
 
   if (!isCi && !options.dryRun && !options.noCi) {
     logger.warn('This run was not triggered in a known CI environment, running in dry-run mode.');
@@ -53,9 +68,22 @@ async function run(context, plugins) {
   // Verify config
   await verify(context);
 
+  console.warn(`...
+  context: ${util.inspect(context, {showHidden: false, depth: null})}
+  branch: ${ciBranch}
+  `);
   options.repositoryUrl = await getGitAuthUrl({...context, branch: {name: ciBranch}});
+  console.warn(`...
+  options.repositoryUrl: ${options.repositoryUrl}
+  `);
   context.branches = await getBranches(options.repositoryUrl, ciBranch, context);
+  console.warn(`...
+  context.branches: ${util.inspect(context.branches, {showHidden: false, depth: null})}
+  `);
   context.branch = context.branches.find(({name}) => name === ciBranch);
+  console.warn(`...
+  context.branch: ${context.branch}
+  `);
 
   if (!context.branch) {
     logger.log(
