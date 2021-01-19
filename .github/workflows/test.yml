@@ -17,8 +17,6 @@ jobs:
       matrix:
         node-version:
           - 10
-          - 12
-          - 14
 
     runs-on: ubuntu-latest
 
