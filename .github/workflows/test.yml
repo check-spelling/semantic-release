@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - renovate/**
+      - "**renovate**"
 
   pull_request:
     types:
