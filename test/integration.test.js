@@ -34,6 +34,8 @@ const env = {
   CI: 'true',
   GH_TOKEN: gitbox.gitCredential,
   GITHUB_URL: mockServer.url,
+  GITHUB_API_URL: mockServer.url,
+  GITHUB_PREFIX: 'api/',
   GITHUB_EVENT_NAME: 'push',
   GITHUB_EVENT_PATH: null,
   GITHUB_ACTION: null,
